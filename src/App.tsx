@@ -6,29 +6,57 @@ import {
   Bell,
   User
 } from 'lucide-react';
-import HomeScreen from './components/HomeScreen';
-import DesignScreen from './components/DesignScreen';
-import ReservationScreen from './components/ReservationScreen';
-import NotificationScreen from './components/NotificationScreen';
-import MyPageScreen from './components/MyPageScreen';
+import ShopDetailScreen from './features/user/ShopDetailScreen';
+import HomeScreen from './features/user/HomeScreen';
+import DesignScreen from './features/user/DesignScreen';
+import ReservationScreen from './features/user/ReservationScreen';
+import NotificationScreen from './features/user/NotificationScreen';
+import MyPageScreen from './features/user/MyPageScreen';
+import ReservationListScreen from './features/admin/ReservationListScreen';
+import StoreEditScreen from './features/admin/StoreEditScreen';
+import DashboardScreen from './features/admin/DashboardScreen';
+import AdminLayout from './features/admin/components/AdminLayout';
+import SuperAdminLayout from './features/super_admin/components/SuperAdminLayout';
+import SuperDashboardScreen from './features/super_admin/screens/SuperDashboardScreen';
+import ClinicManagementScreen from './features/super_admin/screens/ClinicManagementScreen';
+import AgencyManagementScreen from './features/super_admin/screens/AgencyManagementScreen';
+import UserManagementScreen from './features/super_admin/screens/UserManagementScreen';
 
 function App() {
   const [activeNavTab, setActiveNavTab] = useState<'search' | 'design' | 'reservation' | 'notification' | 'mypage'>('search');
+  const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  // ... (rest of state)
+
+  // ... (Super Admin & Admin checks)
+
+  // Shop Detail Screen Overlay
+
 
   return (
     <div className="bg-white min-h-screen">
 
       {/* Main Content Area */}
       <div className="min-h-screen pb-20">
-        {activeNavTab === 'search' && <HomeScreen />}
-        {activeNavTab === 'design' && <DesignScreen />}
+        {activeNavTab === 'search' && (
+          <HomeScreen
+            onEnterAdminMode={() => setIsAdminMode(true)}
+            onShopClick={(id) => setSelectedShopId(id)}
+          />
+        )}
+        {activeNavTab === 'design' && (
+          <DesignScreen
+            onShopClick={(id) => setSelectedShopId(id)}
+          />
+        )}
         {activeNavTab === 'reservation' && <ReservationScreen onNavigateToSearch={() => setActiveNavTab('search')} />}
         {activeNavTab === 'notification' && <NotificationScreen onNavigateToSearch={() => setActiveNavTab('search')} />}
         {activeNavTab === 'mypage' && <MyPageScreen />}
       </div>
+// ...
 
       {/* 4. Bottom Navigation (Fixed Footer) */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe px-6 pt-3 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-50 rounded-t-2xl">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-1 px-6 pt-2 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-50">
         <div className="flex justify-between items-center pb-2">
           <NavButton
             icon={<Search size={24} strokeWidth={2.5} />}
@@ -38,7 +66,7 @@ function App() {
           />
           <NavButton
             icon={<PenTool size={24} />}
-            label="症例"
+            label="投稿"
             isActive={activeNavTab === 'design'}
             onClick={() => setActiveNavTab('design')}
           />
@@ -62,6 +90,14 @@ function App() {
           />
         </div>
       </footer>
+
+      {/* Shop Detail Screen Overlay */}
+      {selectedShopId !== null && (
+        <ShopDetailScreen
+          shopId={selectedShopId}
+          onBack={() => setSelectedShopId(null)}
+        />
+      )}
     </div>
   );
 }

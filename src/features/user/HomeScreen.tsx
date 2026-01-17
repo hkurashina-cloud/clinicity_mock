@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import {
     Search,
     MapPin,
@@ -10,12 +10,24 @@ import {
     Send
 } from 'lucide-react';
 
-function HomeScreen() {
+interface HomeScreenProps {
+    onEnterAdminMode?: () => void;
+    onShopClick: (id: number) => void;
+}
+
+function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
     const [activeTab, setActiveTab] = useState('肌');
-    const [locationAllowed, setLocationAllowed] = useState(false);
+    const [locationAllowed, setLocationAllowed] = useState(() => {
+        return localStorage.getItem('clinicity_location_allowed') === 'true';
+    });
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [searchActiveCategory, setSearchActiveCategory] = useState('肌');
     const categories = ['肌', '脱毛', '顔', 'ボディ', '歯'];
+    const scrollPositions = useRef<Record<string, number>>({});
+
+    useLayoutEffect(() => {
+        window.scrollTo(0, scrollPositions.current[activeTab] || 0);
+    }, [activeTab]);
 
     // カテゴリ別メニュー定義
     const CATEGORY_MENUS: Record<string, string[]> = {
@@ -56,304 +68,181 @@ function HomeScreen() {
         avatar: string;
     };
 
+    // --- データ生成ヘルパー (Improved) ---
+    const generateMockData = (
+        category: string,
+        startId: number,
+        nameSuffixes: string[],
+        tagsList: string[][]
+    ): ShopData[] => {
+        const areaStation = ["青山", "渋谷", "新宿", "銀座", "表参道", "六本木", "恵比寿", "池袋", "代官山", "中目黒", "赤坂", "横浜", "吉祥寺", "大宮", "千葉", "京都", "大阪", "博多"];
+        const areaSuffix = ["駅前", "南口", "北口", "本店", "アネックス", "銀座通店", "表参道店"];
+        const shopPrefixes = ["Clinicity", "Tokyo", "Beauty", "Medical", "Dermatology", "Skin", "Esthetic", "Salon", "White", "Pure", "Clear", "Fine", "Luxury", "Premium"];
+
+        return Array.from({ length: 100 }).map((_, i) => {
+            const id = startId + i;
+
+            // Random attributes
+            const areaName = areaStation[Math.floor(Math.random() * areaStation.length)];
+            const nameSuffix = nameSuffixes[Math.floor(Math.random() * nameSuffixes.length)];
+            const shopPrefix = shopPrefixes[Math.floor(Math.random() * shopPrefixes.length)];
+
+            // Name generation
+            const name = i % 3 === 0
+                ? `${shopPrefix} ${nameSuffix}`
+                : `${areaName}${nameSuffix}`;
+
+            // Image randomization (00 to 15)
+            // 全カテゴリで /images/skin/ を使用する（指定要件）
+            const imgIndex = Math.floor(Math.random() * 16);
+            const prefix = String(imgIndex).padStart(2, '0');
+
+            const images = [
+                `/images/skin/${prefix}1.webp`,
+                `/images/skin/${prefix}2.webp`,
+                `/images/skin/${prefix}3.webp`
+            ];
+
+            // Tags randomization
+            const tags = [];
+            const availableTags = [...tagsList]; // Copy
+            // Pick 2-3 random tags
+            const tagCount = Math.floor(Math.random() * 2) + 2;
+            for (let k = 0; k < tagCount; k++) {
+                if (availableTags.length === 0) break;
+                const randIdx = Math.floor(Math.random() * availableTags.length);
+                const tagGroup = availableTags[randIdx];
+                // Pick one from the group (assuming tagsList is array of arrays like [["tagA", "tagB"], ...])
+                // Or if it is simple array of strings? The previous code passed arrays of arrays mostly for display variation logic
+                // Let's assume input is string[][], and we pick random group then random item?
+                // Actually looking at calls: [["ニキビ", "毛穴"], ["美白"...]]
+                // Let's simplify: flatten unique tags or just pick a random group as 'tags' for this shop?
+                // The Type definition says `tags: string[]`.
+                // Let's Just pick one array from tagsList for simplicity and consistency with previous logic, 
+                // OR mix them up. To make it "randomized", let's pick 2 random tags from flattened list or just pick one pre-defined set.
+                // Let's stick to "Pick one set" to correspond to `tagsList[i % tagsList.length]` logic but randomized.
+                tags.push(...availableTags[Math.floor(Math.random() * availableTags.length)]);
+            }
+            // For better variation, let's just pick one random pair from the provided list
+            const finalTags = tagsList[Math.floor(Math.random() * tagsList.length)];
+
+            return {
+                id,
+                name,
+                branch: areaSuffix[Math.floor(Math.random() * areaSuffix.length)],
+                area: `${areaName} 徒歩${Math.floor(Math.random() * 15) + 1}分`,
+                rating: 3.5 + (Math.random() * 1.5),
+                reviewCount: Math.floor(Math.random() * 1000) + 10,
+                caseCount: Math.floor(Math.random() * 500) + 5,
+                tags: finalTags,
+                description: "お客様一人ひとりの悩みに寄り添い、最適なプランをご提案します。カウンセリング無料、当日予約も可能です。ぜひ一度ご相談ください。",
+                images,
+                avatar: images[0] // 1枚目の画像をアバターにする
+            };
+        });
+    };
+
+    // 100件ずつのダミーデータ生成
     const MOCK_DATA: Record<string, ShopData[]> = {
-        '肌': [
-            {
-                id: 1,
-                name: "Eco Skin Clinic",
-                branch: "表参道本店",
-                area: "表参道 徒歩2分",
-                rating: 4.9,
-                reviewCount: 124,
-                caseCount: 85,
-                tags: ["美肌", "オーガニック"],
-                description: "初回限定！肌質改善コース¥5,000OFFクーポン配布中🌿 自然派志向の方に。",
-                images: [
-                    "/images/salon_01.webp",
-                    "/images/salon_02.webp",
-                    "/images/salon_03.webp"
-                ],
-                avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80"
-            },
-            {
-                id: 2,
-                name: "Skin Labo Tokyo",
-                branch: "渋谷店",
-                area: "渋谷 徒歩5分",
-                rating: 4.7,
-                reviewCount: 98,
-                caseCount: 120,
-                tags: ["ニキビケア", "最新機器"],
-                description: "最新レーザー導入！ニキビ跡徹底ケアコース。学生割引あり✨",
-                images: [
-                    "https://images.unsplash.com/photo-1507652313519-d4e917a584fd?w=400&q=80",
-                    "https://images.unsplash.com/photo-1629425733761-caae3b5f2e50?w=400&q=80",
-                    "https://images.unsplash.com/photo-1519415387722-a1c3bbef716c?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&q=80"
-            },
-            {
-                id: 3,
-                name: "Pure Beauty",
-                branch: "銀座店",
-                area: "銀座 徒歩1分",
-                rating: 4.8,
-                reviewCount: 210,
-                caseCount: 340,
-                tags: ["エイジングケア", "個室"],
-                description: "ラグジュアリーな完全個室で極上のエイジングケアを。体験予約受付中。",
-                images: [
-                    "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=400&q=80",
-                    "https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&q=80",
-                    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80"
-            }
-        ],
-        '脱毛': [
-            {
-                id: 11,
-                name: "Smooth Skin Salon",
-                branch: "新宿店",
-                area: "新宿 徒歩3分",
-                rating: 4.8,
-                reviewCount: 305,
-                caseCount: 500,
-                tags: ["全身脱毛", "痛くない"],
-                description: "【全身脱毛】月額¥3,000〜！痛みの少ない最新マシン使用。カウンセリング無料。",
-                images: [
-                    "https://images.unsplash.com/photo-1588698967468-46c1e34e5652?w=400&q=80",
-                    "https://images.unsplash.com/photo-1596549216766-0d19f6a72e81?w=400&q=80",
-                    "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80"
-            },
-            {
-                id: 12,
-                name: "Men's Datsumo",
-                branch: "池袋店",
-                area: "池袋 徒歩4分",
-                rating: 4.6,
-                reviewCount: 45,
-                caseCount: 20,
-                tags: ["メンズ脱毛", "ヒゲ脱毛"],
-                description: "男性専用サロン。朝のヒゲ剃りから解放されませんか？初回¥980キャンペーン。",
-                images: [
-                    "https://images.unsplash.com/photo-1618331835717-801e976710b2?w=400&q=80",
-                    "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?w=400&q=80",
-                    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"
-            },
-            {
-                id: 13,
-                name: "Quick Wax",
-                branch: "六本木店",
-                area: "六本木 徒歩2分",
-                rating: 4.9,
-                reviewCount: 50,
-                caseCount: 100,
-                tags: ["ブラジリアンワックス", "即効性"],
-                description: "急な予定でも安心！ブラジリアンワックス専門。スピーディーで美しい仕上がり。",
-                images: [
-                    "https://images.unsplash.com/photo-1555820585-c5ae44394b79?w=400&q=80",
-                    "https://images.unsplash.com/photo-1596549216634-927b587b14d2?w=400&q=80",
-                    "https://images.unsplash.com/photo-1522337360705-8754d9029060?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"
-            }
-        ],
-        '顔': [
-            {
-                id: 21,
-                name: "Face Lift Pro",
-                branch: "青山店",
-                area: "青山一丁目 徒歩1分",
-                rating: 5.0,
-                reviewCount: 88,
-                caseCount: 150,
-                tags: ["小顔", "コルギ"],
-                description: "話題の小顔コルギ！痛気持ちいい施術でスッキリフェイスラインへ。モデル来店多数。",
-                images: [
-                    "https://images.unsplash.com/photo-1601666675154-2c6c965c71b6?w=400&q=80",
-                    "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=400&q=80",
-                    "https://images.unsplash.com/photo-1570174004693-8f844c130c55?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80"
-            },
-            {
-                id: 22,
-                name: "Pore Cleansing",
-                branch: "原宿店",
-                area: "原宿 徒歩6分",
-                rating: 4.5,
-                reviewCount: 30,
-                caseCount: 40,
-                tags: ["毛穴洗浄", "黒ずみケア"],
-                description: "毛穴の黒ずみ・開きを徹底洗浄！ハイドラフェイシャル導入店。",
-                images: [
-                    "https://images.unsplash.com/photo-1616394584244-a4b521b36622?w=400&q=80",
-                    "https://images.unsplash.com/photo-1598440947619-2c35fc9af2fc?w=400&q=80",
-                    "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=100&q=80"
-            },
-            {
-                id: 23,
-                name: "Relax Facial",
-                branch: "代官山店",
-                area: "代官山 徒歩3分",
-                rating: 4.8,
-                reviewCount: 60,
-                caseCount: 85,
-                tags: ["リラクゼーション", "アロマ"],
-                description: "極上のアロマフェイシャルで心も体もリラックス。日頃の疲れを癒しませんか？",
-                images: [
-                    "https://images.unsplash.com/photo-1544161515-4ab6ce6db48e?w=400&q=80",
-                    "https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=400&q=80",
-                    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1619895862047-e64331a2ba3d?w=100&q=80"
-            }
-        ],
-        'ボディ': [
-            {
-                id: 31,
-                name: "Slim Body Gym",
-                branch: "恵比寿店",
-                area: "恵比寿 徒歩2分",
-                rating: 4.7,
-                reviewCount: 110,
-                caseCount: 200,
-                tags: ["痩身", "ダイエット"],
-                description: "【結果出し重視】キャビテーション×ラジオ波で脂肪燃焼！本気で痩せたい方へ。",
-                images: [
-                    "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=80",
-                    "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80",
-                    "https://images.unsplash.com/photo-1583454110551-21f2fa928d34?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=100&q=80"
-            },
-            {
-                id: 32,
-                name: "Healing Massage",
-                branch: "中目黒店",
-                area: "中目黒 徒歩4分",
-                rating: 4.9,
-                reviewCount: 50,
-                caseCount: 20,
-                tags: ["マッサージ", "整体"],
-                description: "国家資格保持者による本格整体。肩こり・腰痛の根本改善を目指します。",
-                images: [
-                    "https://images.unsplash.com/photo-1542848284-8afa78a08ccb?w=400&q=80",
-                    "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&q=80",
-                    "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1542596594-649edbc13630?w=100&q=80"
-            },
-            {
-                id: 33,
-                name: "Detox Spa",
-                branch: "麻布十番店",
-                area: "麻布十番 徒歩5分",
-                rating: 4.6,
-                reviewCount: 15,
-                caseCount: 5,
-                tags: ["デトックス", "リンパ"],
-                description: "アロマリンパドレナージュで老廃物を排出。むくみスッキリ、冷え性改善にも。",
-                images: [
-                    "https://images.unsplash.com/photo-1591343395082-e120087004b4?w=400&q=80",
-                    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80",
-                    "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=100&q=80"
-            }
-        ],
-        '歯': [
-            {
-                id: 41,
-                name: "White Dental Clinic",
-                branch: "赤坂店",
-                area: "赤坂 徒歩3分",
-                rating: 4.8,
-                reviewCount: 220,
-                caseCount: 1000,
-                tags: ["ホワイトニング", "歯科矯正"],
-                description: "【医療ホワイトニング】1回で白さを実感。歯科医師監修で安心・安全。",
-                images: [
-                    "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=400&q=80",
-                    "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&q=80",
-                    "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&q=80"
-            },
-            {
-                id: 42,
-                name: "Smile Ortho",
-                branch: "渋谷公園通り店",
-                area: "渋谷 徒歩7分",
-                rating: 4.7,
-                reviewCount: 400,
-                caseCount: 1500,
-                tags: ["マウスピース矯正", "インビザライン"],
-                description: "目立たないマウスピース矯正。月々¥3,000〜。3Dシミュレーション無料体験実施中。",
-                images: [
-                    "https://images.unsplash.com/photo-1571772996211-2f02c9727629?w=400&q=80",
-                    "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&q=80",
-                    "https://images.unsplash.com/photo-1588776814546-2ab8ca544346?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&q=80"
-            },
-            {
-                id: 43,
-                name: "Dental Salon",
-                branch: "目黒店",
-                area: "目黒 徒歩1分",
-                rating: 4.5,
-                reviewCount: 20,
-                caseCount: 15,
-                tags: ["歯科クリーニング", "口臭ケア"],
-                description: "プロのクリーニングでツルツルの歯に。口臭予防、歯周病予防にもおすすめです。",
-                images: [
-                    "https://images.unsplash.com/photo-1600170311833-c2cf5280ce49?w=400&q=80",
-                    "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=400&q=80",
-                    "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?w=400&q=80"
-                ],
-                avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=100&q=80"
-            }
-        ]
+        '肌': generateMockData(
+            '肌',
+            1,
+            ["スキンクリニック", "皮膚科", "美容皮膚科", "メディカルスキン", "肌質改善ラボ", "美肌センター"],
+            [
+                ["ニキビ", "毛穴"], ["美白", "シミ取り"], ["肝斑", "ピーリング"],
+                ["ボトックス", "ヒアルロン酸"], ["ポテンツァ", "ダーマペン"]
+            ]
+        ),
+        '脱毛': generateMockData(
+            '脱毛',
+            101,
+            ["脱毛クリニック", "レーザー院", "医療脱毛", "メンズ脱毛", "脱毛サロン"],
+            [
+                ["全身脱毛", "VIO"], ["医療脱毛", "都度払い"], ["メンズ脱毛", "ヒゲ"],
+                ["脇脱毛", "ジェントルマックス"], ["SHR脱毛", "痛くない"]
+            ]
+        ),
+        '顔': generateMockData(
+            '顔',
+            201,
+            ["美容外科", "形成外科", "フェイスクリニック", "小顔矯正", "リフトアップ"],
+            [
+                ["二重整形", "埋没法"], ["糸リフト", "HIFU"], ["鼻整形", "プロテーゼ"],
+                ["小顔注射", "ボトックス"], ["クマ取り", "脱脂"]
+            ]
+        ),
+        'ボディ': generateMockData(
+            'ボディ',
+            301,
+            ["痩身クリニック", "ボディラボ", "ダイエットセンター", "脂肪吸引", "美容整体"],
+            [
+                ["脂肪吸引", "脂肪溶解注射"], ["痩身エステ", "ハイパーナイフ"],
+                ["豊胸", "ヒアルロン酸"], ["骨盤矯正", "マッサージ"], ["ワキガ", "多汗症"]
+            ]
+        ),
+        '歯': generateMockData(
+            '歯',
+            401,
+            ["歯科クリニック", "デンタルオフィス", "矯正歯科", "ホワイトニングサロン", "審美歯科"],
+            [
+                ["ホワイトニング", "オフィス"], ["マウスピース矯正", "インビザライン"],
+                ["セラミック", "インプラント"], ["ワイヤー矯正", "部分矯正"], ["クリーニング", "歯石除去"]
+            ]
+        )
     };
 
     return (
         <div className="min-h-screen bg-white pb-24 relative font-sans">
-            {/* 1. Header Area (AI Chatbot) - Optimized for Mobile */}
-            <header className="pt-safe-top px-5 pb-5 bg-white sticky top-0 z-40 shadow-sm">
-                <div className="flex flex-col gap-4 pt-4">
-                    {/* Search Input Area - Prominent */}
-                    <div className="relative flex items-center shadow-lg rounded-full ring-1 ring-gray-100">
-                        <input
-                            type="text"
-                            placeholder="AIに相談する..."
-                            className="w-full pl-6 pr-14 py-4 rounded-full bg-white text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
-                        />
-                        <button className="absolute right-2 p-2.5 bg-accent-gradient rounded-full text-white shadow-md hover:opacity-90 active:scale-95 transition-all">
-                            <Send size={20} />
+            {/* ▼▼▼ Consolidated Header ▼▼▼ */}
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+
+                {/* 1. Logo & Login Row */}
+                <div className="h-14 flex items-center justify-between px-4">
+                    <div className="text-xl font-bold text-gray-800 tracking-tight">Clinicity</div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onEnterAdminMode}
+                            className="text-sm font-medium text-gray-600 px-3 py-2 rounded hover:bg-gray-50 transition-colors"
+                        >
+                            <span className="hidden md:inline">管理者画面</span>
+                            <span className="md:hidden">管理</span>
+                        </button>
+                        <button
+                            onClick={() => console.log('Login clicked')}
+                            className="text-sm font-bold bg-gray-900 text-white px-4 py-2 rounded shadow-sm hover:bg-black transition-colors"
+                        >
+                            ログイン
                         </button>
                     </div>
                 </div>
-            </header>
 
-            {/* 2. Category Tabs */}
-            <nav className="sticky top-[90px] z-30 bg-white/95 backdrop-blur-sm pt-3 pb-3 border-b border-gray-50">
-                <div className="px-4 w-full">
+                {/* 2. Search Bar Row (Compact) */}
+                <div className="px-4 pb-3">
+                    <div className="relative flex items-center shadow-sm rounded-full bg-gray-50 border border-gray-100">
+                        <input
+                            type="text"
+                            placeholder="AIに相談する..."
+                            className="w-full pl-6 pr-14 py-3 rounded-full bg-transparent text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
+                        />
+                        <button className="absolute right-2 p-1.5 bg-accent-gradient rounded-full text-white shadow-md hover:opacity-90 active:scale-95 transition-all">
+                            <Send size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* 3. Category Tabs Row (No top padding) */}
+                <div className="px-4 pb-0">
                     <div className="grid grid-cols-5 gap-2 w-full">
                         {categories.map((cat) => (
                             <button
                                 key={cat}
-                                onClick={() => setActiveTab(cat)}
-                                className={`py-2 rounded-full text-[13px] font-bold transition-all shadow-sm border ${activeTab === cat
-                                    ? 'border-secondary text-secondary bg-blue-50'
-                                    : 'border-gray-100 text-gray-500 bg-white hover:bg-gray-50'
+                                onClick={() => {
+                                    scrollPositions.current[activeTab] = window.scrollY;
+                                    setActiveTab(cat);
+                                }}
+                                className={`pb-3 text-[13px] font-bold transition-all relative ${activeTab === cat
+                                    ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600'
+                                    : 'text-gray-400 hover:text-gray-600'
                                     }`}
                             >
                                 {cat}
@@ -361,7 +250,8 @@ function HomeScreen() {
                         ))}
                     </div>
                 </div>
-            </nav>
+            </header>
+            {/* ▲▲▲ Consolidated Header End ▲▲▲ */}
 
             {/* 3. Main Content Area */}
             <main className="px-5 mt-6">
@@ -377,7 +267,10 @@ function HomeScreen() {
                             位置情報の利用を許可してください
                         </p>
                         <button
-                            onClick={() => setLocationAllowed(true)}
+                            onClick={() => {
+                                localStorage.setItem('clinicity_location_allowed', 'true');
+                                setLocationAllowed(true);
+                            }}
                             className="w-full py-3 bg-accent-gradient text-white font-bold rounded-xl shadow-md active:scale-95 transition-transform"
                         >
                             位置情報を許可する
@@ -415,7 +308,11 @@ function HomeScreen() {
                         {/* Mock Data List Based on Active Tab */}
                         <div className="flex flex-col gap-6">
                             {MOCK_DATA[activeTab]?.map((shop) => (
-                                <div key={shop.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                                <div
+                                    key={shop.id}
+                                    onClick={() => onShopClick(shop.id)}
+                                    className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
+                                >
                                     {/* Images Row */}
                                     <div className="flex gap-0.5 h-32">
                                         {shop.images.map((img, idx) => (
@@ -456,11 +353,11 @@ function HomeScreen() {
                                                         <Star key={i} size={12} fill={i < Math.floor(shop.rating) ? "currentColor" : "none"} className={i < Math.floor(shop.rating) ? "" : "text-gray-300"} />
                                                     ))}
                                                 </div>
-                                                <span className="text-sm font-bold text-yellow-500 ml-1">{shop.rating}</span>
+                                                <span className="text-sm font-bold text-yellow-500 ml-1">{shop.rating.toFixed(1)}</span>
 
                                                 {/* Rating Counts */}
                                                 <span className="text-[10px] text-gray-400 ml-2">
-                                                    口コミ {shop.reviewCount}件　症例 {shop.caseCount}件
+                                                    口コミ {shop.reviewCount}件 症例 {shop.caseCount}件
                                                 </span>
                                             </div>
                                             {shop.tags.map(tag => (
@@ -492,6 +389,8 @@ function HomeScreen() {
                     </div>
                 )}
             </main>
+
+
 
             {/* Search Modal Overlay */}
             {isSearchModalOpen && (

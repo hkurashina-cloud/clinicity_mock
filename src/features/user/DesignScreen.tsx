@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Search, Map, Heart } from 'lucide-react';
 
-function DesignScreen() {
+interface DesignScreenProps {
+    onShopClick?: (id: number) => void;
+}
+
+function DesignScreen({ onShopClick }: DesignScreenProps) {
     const [activeTab, setActiveTab] = useState('肌');
     const [activeSubTab, setActiveSubTab] = useState('急上昇');
     const categories = ['肌', '脱毛', '顔', 'ボディ', '歯'];
@@ -18,68 +22,63 @@ function DesignScreen() {
         };
     };
 
-    const DESIGN_POSTS: DesignPost[] = [
-        {
-            id: 1,
-            image: "https://images.unsplash.com/photo-1570174004693-8f844c130c55?w=400&q=80",
-            likes: 128,
-            price: "¥12,000",
-            user: {
-                name: "Yui Beauty",
-                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80"
+    // --- Mock Data Generators ---
+    const generateDesignPosts = (type: '急上昇' | '新着' | 'フォロー中', count: number): DesignPost[] => {
+        const influencers = ["Risa_Beauty", "Dr.Yoko", "Miki_Clinic_Nurse", "Eri_Aesthetic", "Official_Clinicity"];
+
+        return Array.from({ length: count }).map((_, i) => {
+            // Random Image Logic (00-15 prefix, 1-3 suffix)
+            const imgSetIndex = Math.floor(Math.random() * 16);
+            const imgPrefix = String(imgSetIndex).padStart(2, '0');
+            const imgSuffix = Math.floor(Math.random() * 3) + 1;
+            const mainImage = `/images/skin/${imgPrefix}${imgSuffix}.webp`;
+
+            // Avatar Image (Different from main if possible, but simplicity is key)
+            const avatarSetIndex = Math.floor(Math.random() * 16);
+            const avatarPrefix = String(avatarSetIndex).padStart(2, '0');
+            const avatarImage = `/images/skin/${avatarPrefix}1.webp`;
+
+            // Type-based Logic
+            let likes = 0;
+            let name = "";
+            let price = "";
+
+            if (type === '急上昇') {
+                likes = Math.floor(Math.random() * 4700) + 300; // 300 - 5000
+                name = `User_${Math.floor(Math.random() * 10000)}`;
+            } else if (type === '新着') {
+                likes = Math.floor(Math.random() * 50); // 0 - 50
+                name = `NewMember_${Math.floor(Math.random() * 500)}`;
+            } else { // フォロー中
+                likes = Math.floor(Math.random() * 1000);
+                name = influencers[i % influencers.length];
             }
-        },
-        {
-            id: 2,
-            image: "https://images.unsplash.com/photo-1596549216634-927b587b14d2?w=400&q=80",
-            likes: 85,
-            price: "¥5,500",
-            user: {
-                name: "Salon Lux",
-                avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80"
-            }
-        },
-        {
-            id: 3,
-            image: "https://images.unsplash.com/photo-1629425733761-caae3b5f2e50?w=400&q=80",
-            likes: 420,
-            price: "¥29,800",
-            user: {
-                name: "Dr. K",
-                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&q=80"
-            }
-        },
-        {
-            id: 4,
-            image: "https://images.unsplash.com/photo-1616394584244-a4b521b36622?w=400&q=80",
-            likes: 210,
-            price: "¥8,900",
-            user: {
-                name: "Pure Skin",
-                avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80"
-            }
-        },
-        {
-            id: 5,
-            image: "https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&q=80",
-            likes: 56,
-            price: "¥15,000",
-            user: {
-                name: "Men's TBC",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80"
-            }
-        },
-        {
-            id: 6,
-            image: "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=400&q=80",
-            likes: 304,
-            price: "¥3,000",
-            user: {
-                name: "White Lab",
-                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80"
-            }
-        }
-    ];
+
+            // Random Price
+            const prices = ["¥3,000", "¥5,500", "¥9,800", "¥12,000", "¥29,800", "¥50,000", "¥15,000"];
+            price = prices[Math.floor(Math.random() * prices.length)];
+
+            return {
+                id: i + (type === '急上昇' ? 0 : type === '新着' ? 1000 : 2000), // Unique IDs partitions
+                image: mainImage,
+                likes,
+                price,
+                user: {
+                    name,
+                    avatar: avatarImage
+                }
+            };
+        });
+    };
+
+    // Generate static data once
+    const ALL_POSTS = {
+        '急上昇': generateDesignPosts('急上昇', 60),
+        '新着': generateDesignPosts('新着', 60),
+        'フォロー中': generateDesignPosts('フォロー中', 50),
+    };
+
+    const displayPosts = ALL_POSTS[activeSubTab as keyof typeof ALL_POSTS] || [];
 
     return (
         <div className="min-h-screen bg-white pb-24 font-sans">
@@ -143,13 +142,14 @@ function DesignScreen() {
             </header>
 
             {/* 2. Image Grid Content */}
-            <main className="px-1 mt-2">
-                <div className="grid grid-cols-2 gap-1.5">
-                    {DESIGN_POSTS.map((post, idx) => (
-                        <div key={post.id} className="flex flex-col gap-2 mb-2">
+            <main className="px-4 mt-2">
+                <div className="columns-2 md:columns-3 gap-4">
+                    {displayPosts.map((post, idx) => (
+                        <div key={post.id} className="break-inside-avoid mb-4 flex flex-col gap-2">
                             {/* Image Card */}
                             <div
-                                className="relative rounded-xl overflow-hidden bg-gray-200 shadow-sm group"
+                                onClick={() => onShopClick && onShopClick(post.id)}
+                                className="relative rounded-xl overflow-hidden bg-gray-200 shadow-sm group cursor-pointer active:opacity-95 transition-opacity"
                                 style={{ aspectRatio: idx % 3 === 0 ? '3/4' : '1/1' }} // Masonry-ish feel
                             >
                                 <img src={post.image} alt="post" className="w-full h-full object-cover" />

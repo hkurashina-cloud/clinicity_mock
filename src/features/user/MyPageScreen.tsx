@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, ChevronRight, Calendar, Info, Award } from 'lucide-react';
+import { Menu, ChevronRight, Calendar } from 'lucide-react';
 
 function MyPageScreen() {
     const [activeTab, setActiveTab] = useState<'reserved' | 'history'>('reserved');
