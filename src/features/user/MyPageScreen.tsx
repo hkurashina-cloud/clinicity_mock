@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, ChevronRight, Calendar } from 'lucide-react';
 
 function MyPageScreen() {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'reserved' | 'history'>('reserved');
 
     // Mock User Data
@@ -153,7 +155,10 @@ function MyPageScreen() {
                                     </div>
                                 </div>
                                 <div className="px-3 pb-3">
-                                    <button className="w-full py-2 bg-white border border-pink-400 text-pink-500 font-bold rounded-lg text-xs hover:bg-pink-50 transition-colors">
+                                    <button
+                                        onClick={() => navigate('/reserve', { state: { shopId: 1, shopName: currentReservation.salonName } })}
+                                        className="w-full py-2 bg-white border border-pink-400 text-pink-500 font-bold rounded-lg text-xs hover:bg-pink-50 transition-colors"
+                                    >
                                         もう一度予約する
                                     </button>
                                 </div>

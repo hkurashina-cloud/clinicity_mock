@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, ChevronRight, Bell, Search } from 'lucide-react';
 
 function ReservationScreen({ onNavigateToSearch }: { onNavigateToSearch?: () => void }) {
+    const navigate = useNavigate();
+
     // --- TOGGLE THIS VARIABLE to switch between Pattern A (true) and Pattern B (false) ---
     const [hasReservation, setHasReservation] = useState<boolean>(true);
 
@@ -89,7 +92,10 @@ function ReservationScreen({ onNavigateToSearch }: { onNavigateToSearch?: () => 
 
                             {/* Action Buttons */}
                             <div className="px-4 pb-4">
-                                <button className="w-full py-2.5 bg-white border border-primary text-primary font-bold rounded-xl text-xs hover:bg-pink-50 transition-colors active:scale-[0.98]">
+                                <button
+                                    onClick={() => navigate('/reserve', { state: { shopId: 1, shopName: reservation.salonName } })}
+                                    className="w-full py-2.5 bg-white border border-blue-500 text-blue-500 font-bold rounded-xl text-xs hover:bg-blue-50 transition-colors active:scale-[0.98]"
+                                >
                                     もう一度予約する
                                 </button>
                             </div>

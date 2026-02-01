@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageCircle, ChevronRight, Mail } from 'lucide-react';
 
 function NotificationScreen({ onNavigateToSearch }: { onNavigateToSearch?: () => void }) {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'notification' | 'message'>('message');
     // --- TOGGLE THIS VARIABLE to switch between Message List (true) and Empty State (false) ---
     const [hasMessages, setHasMessages] = useState<boolean>(true);
@@ -106,7 +108,11 @@ function NotificationScreen({ onNavigateToSearch }: { onNavigateToSearch?: () =>
                             /* Pattern A: Message List */
                             <div className="flex flex-col gap-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                                 {messages.map(msg => (
-                                    <div key={msg.id} className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0 relative">
+                                    <div
+                                        key={msg.id}
+                                        onClick={() => navigate(`/message/${msg.id}`)}
+                                        className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0 relative"
+                                    >
                                         {/* Avatar */}
                                         <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0 overflow-hidden border border-gray-100">
                                             <img src={msg.avatar} alt={msg.name} className="w-full h-full object-cover" />

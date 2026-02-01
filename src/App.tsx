@@ -1,62 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import {
   Search,
   PenTool,
   Calendar,
   Bell,
-  User
+  User,
 } from 'lucide-react';
+
+// ================================
+// ユーザー側の画面たち
+// ================================
 import ShopDetailScreen from './features/user/ShopDetailScreen';
 import HomeScreen from './features/user/HomeScreen';
 import DesignScreen from './features/user/DesignScreen';
 import ReservationScreen from './features/user/ReservationScreen';
 import NotificationScreen from './features/user/NotificationScreen';
 import MyPageScreen from './features/user/MyPageScreen';
-import ReservationListScreen from './features/admin/ReservationListScreen';
-import StoreEditScreen from './features/admin/StoreEditScreen';
+import ReservationFlowScreen from './features/user/ReservationFlowScreen';
+import ReservationCompleteScreen from './features/user/ReservationCompleteScreen';
+import ChatRoomScreen from './features/user/ChatRoomScreen';
+
+// ================================
+// 管理画面 (Admin) の画面たち
+// ================================
 import DashboardScreen from './features/admin/DashboardScreen';
+import ReservationListScreen from './features/admin/ReservationListScreen';
 import AdminLayout from './features/admin/components/AdminLayout';
-import SuperAdminLayout from './features/super_admin/components/SuperAdminLayout';
-import SuperDashboardScreen from './features/super_admin/screens/SuperDashboardScreen';
-import ClinicManagementScreen from './features/super_admin/screens/ClinicManagementScreen';
-import AgencyManagementScreen from './features/super_admin/screens/AgencyManagementScreen';
-import UserManagementScreen from './features/super_admin/screens/UserManagementScreen';
 
-function App() {
-  const [activeNavTab, setActiveNavTab] = useState<'search' | 'design' | 'reservation' | 'notification' | 'mypage'>('search');
+// ================================
+// ユーザー側のメインコンポーネント
+// (タブ切り替えのロジックなど)
+// ================================
+const UserAppShell: React.FC = () => {
+  const location = useLocation();
+  const [activeNavTab, setActiveNavTab] = useState<
+    'search' | 'design' | 'reservation' | 'notification' | 'mypage'
+  >('search');
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  // ... (rest of state)
 
-  // ... (Super Admin & Admin checks)
-
-  // Shop Detail Screen Overlay
-
+  // Handle navigation state for tab switching
+  useEffect(() => {
+    const state = location.state as { tab?: string } | null;
+    if (state?.tab === 'search') {
+      setActiveNavTab('search');
+    } else if (state?.tab === 'reservation') {
+      setActiveNavTab('reservation');
+    }
+    // Clear the state after reading to prevent re-triggering on refresh
+    if (state?.tab) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   return (
     <div className="bg-white min-h-screen">
-
       {/* Main Content Area */}
       <div className="min-h-screen pb-20">
         {activeNavTab === 'search' && (
           <HomeScreen
-            onEnterAdminMode={() => setIsAdminMode(true)}
+            onEnterAdminMode={() => {}} // もうURLで移動するので不要だが型合わせのため残す
             onShopClick={(id) => setSelectedShopId(id)}
           />
         )}
         {activeNavTab === 'design' && (
-          <DesignScreen
-            onShopClick={(id) => setSelectedShopId(id)}
+          <DesignScreen onShopClick={(id) => setSelectedShopId(id)} />
+        )}
+        {activeNavTab === 'reservation' && (
+          <ReservationScreen
+            onNavigateToSearch={() => setActiveNavTab('search')}
           />
         )}
-        {activeNavTab === 'reservation' && <ReservationScreen onNavigateToSearch={() => setActiveNavTab('search')} />}
-        {activeNavTab === 'notification' && <NotificationScreen onNavigateToSearch={() => setActiveNavTab('search')} />}
+        {activeNavTab === 'notification' && (
+          <NotificationScreen
+            onNavigateToSearch={() => setActiveNavTab('search')}
+          />
+        )}
         {activeNavTab === 'mypage' && <MyPageScreen />}
       </div>
-// ...
 
-      {/* 4. Bottom Navigation (Fixed Footer) */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-1 px-6 pt-2 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-50">
+      {/* Bottom Navigation (Fixed Footer) */}
+      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe px-6 pt-2 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] z-50">
         <div className="flex justify-between items-center pb-2">
           <NavButton
             icon={<Search size={24} strokeWidth={2.5} />}
@@ -100,29 +124,105 @@ function App() {
       )}
     </div>
   );
-}
+};
 
-// Helper Component for Navigation Buttons
-const NavButton = ({ icon, label, isActive = false, onClick }: { icon: React.ReactNode, label: string, isActive?: boolean, onClick?: () => void }) => {
+// ================================
+// ナビゲーションボタン (共通パーツ)
+// ================================
+type NavButtonProps = {
+  icon: React.ReactNode;
+  label: string;
+  isActive?: boolean;
+  onClick?: () => void;
+};
+
+const NavButton: React.FC<NavButtonProps> = ({
+  icon,
+  label,
+  isActive = false,
+  onClick,
+}) => {
   return (
     <button
       onClick={onClick}
       className="flex flex-col items-center gap-1.5 min-w-[64px] group"
     >
-      <div className={`transition-all duration-300 ${isActive ? 'text-primary -translate-y-1' : 'text-gray-400 group-hover:text-gray-600'}`}>
-        {isActive ? (
-          <div className="text-transparent bg-clip-text bg-accent-gradient [&>svg]:stroke-[url(#gradient)] filter drop-shadow-sm">
-            <span style={{ color: isActive ? '#0072FF' : 'inherit' }}>{icon}</span>
-          </div>
-        ) : (
-          icon
-        )}
+      <div
+        className={`transition-all duration-300 ${
+          isActive
+            ? 'text-blue-500 -translate-y-1'
+            : 'text-gray-400 group-hover:text-gray-600'
+        }`}
+      >
+        {isActive ? <div className="filter drop-shadow-sm">{icon}</div> : icon}
       </div>
-      <span className={`text-[10px] font-bold tracking-wide ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+      <span
+        className={`text-[10px] font-bold tracking-wide ${
+          isActive ? 'text-gray-900' : 'text-gray-400'
+        }`}
+      >
         {label}
       </span>
     </button>
   );
 };
 
+// ================================
+// ルーティングの定義 (エントリーポイント)
+// ================================
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* =========================================
+          ★ 管理画面 (Admin) の設定
+          =========================================
+        */}
+
+        {/* ① ダッシュボード ( http://localhost:5173/admin ) */}
+        <Route
+          path="/admin"
+          element={
+            <AdminLayout>
+              {/* ここにあるのが children です */}
+              <DashboardScreen />
+            </AdminLayout>
+          }
+        />
+
+        {/* ② 予約管理カレンダー ( http://localhost:5173/admin/calendar ) */}
+        <Route
+          path="/admin/calendar"
+          element={
+            <AdminLayout>
+              {/* URL が /admin/calendar の時は、中身がこれに入れ替わります */}
+              <ReservationListScreen />
+            </AdminLayout>
+          }
+        />
+
+        {/* 今後ページを増やす時はここに追加していくだけ！ */}
+        {/* <Route path="/admin/store" element={<AdminLayout><StoreEditScreen /></AdminLayout>} /> */}
+
+        {/* =========================================
+          ★ 予約フロー画面（独立レイアウト）
+          =========================================
+        */}
+        <Route path="/reserve" element={<ReservationFlowScreen />} />
+        <Route path="/reserve/complete" element={<ReservationCompleteScreen />} />
+        <Route path="/message/:id" element={<ChatRoomScreen />} />
+
+        {/* =========================================
+          ★ ユーザー画面 (User) の設定
+          =========================================
+        */}
+        <Route path="/*" element={<UserAppShell />} />
+        {/* ※ UserAppShell を別ファイルに出した場合は import して使う */}
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+// Fast Refresh 用のルールをこの行だけ無効化して、エラー表示を避ける
+// eslint-disable-next-line react-refresh/only-export-components
 export default App;
