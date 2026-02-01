@@ -22,6 +22,7 @@ function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
     });
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [searchActiveCategory, setSearchActiveCategory] = useState('肌');
+    const [isInstantReservation, setIsInstantReservation] = useState(false);
     const categories = ['肌', '脱毛', '顔', 'ボディ', '歯'];
     const scrollPositions = useRef<Record<string, number>>({});
 
@@ -508,24 +509,16 @@ function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
                                     <h4 className="text-sm font-bold text-gray-800 mb-1">今すぐ予約</h4>
                                     <p className="text-[10px] text-gray-400 leading-tight">ビューティストからの返信を待たなくても<br />その場で予約が確定します</p>
                                 </div>
-                                <div className="w-12 h-7 bg-gray-200 rounded-full relative cursor-pointer">
-                                    <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-sm"></div>
-                                </div>
-                            </div>
-
-                            {/* Salon Features Icons (Mock) */}
-                            <div>
-                                <h4 className="text-sm font-bold text-gray-800 mb-3">サロンの特徴</h4>
-                                <div className="flex gap-4 overflow-x-auto pb-2">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="flex flex-col items-center gap-2 shrink-0">
-                                            <div className="w-14 h-14 rounded-full border border-gray-200 flex items-center justify-center bg-gray-50">
-                                                {/* Dummy icon placeholder */}
-                                                <div className="w-6 h-6 border-2 border-gray-300 rounded-sm"></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                <button
+                                    onClick={() => setIsInstantReservation(!isInstantReservation)}
+                                    className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors duration-200 ${
+                                        isInstantReservation ? 'bg-blue-500' : 'bg-gray-200'
+                                    }`}
+                                >
+                                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+                                        isInstantReservation ? 'translate-x-5' : 'translate-x-1'
+                                    }`}></div>
+                                </button>
                             </div>
                         </div>
 

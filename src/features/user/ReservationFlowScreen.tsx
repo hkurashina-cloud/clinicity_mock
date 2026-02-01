@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Check, Clock, MapPin, Sparkles } from 'lucide-react';
 
@@ -151,7 +151,8 @@ const WeeklyCalendar: React.FC<{
   onSelectSlot: (slot: SelectedSlot) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
-}> = ({ weekOffset, selectedSlot, onSelectSlot, onPrevWeek, onNextWeek }) => {
+  highlightedDate?: string; // YYYY-MM-DD format
+}> = ({ weekOffset, selectedSlot, onSelectSlot, onPrevWeek, onNextWeek, highlightedDate }) => {
   // Generate 7 days starting from today + weekOffset
   const weekDays = useMemo(() => {
     const days: { date: Date; dateNum: string; dayLabel: string; dayOfWeek: number }[] = [];
@@ -242,11 +243,15 @@ const WeeklyCalendar: React.FC<{
               {weekDays.map((day, idx) => {
                 const isSunday = day.dayOfWeek === 0;
                 const isSaturday = day.dayOfWeek === 6;
+                const dateStr = `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, '0')}-${String(day.date.getDate()).padStart(2, '0')}`;
+                const isHighlighted = highlightedDate === dateStr;
                 return (
                   <th
                     key={idx}
                     className={`p-2 text-center border-b border-gray-100 min-w-[44px] ${
-                      isSunday
+                      isHighlighted
+                        ? 'bg-blue-100 border-blue-300'
+                        : isSunday
                         ? 'bg-red-50'
                         : isSaturday
                         ? 'bg-blue-50'
@@ -255,7 +260,9 @@ const WeeklyCalendar: React.FC<{
                   >
                     <div
                       className={`text-[10px] font-medium ${
-                        isSunday
+                        isHighlighted
+                          ? 'text-blue-600'
+                          : isSunday
                           ? 'text-red-400'
                           : isSaturday
                           ? 'text-blue-400'
@@ -266,7 +273,9 @@ const WeeklyCalendar: React.FC<{
                     </div>
                     <div
                       className={`text-sm font-bold ${
-                        isSunday
+                        isHighlighted
+                          ? 'text-blue-700'
+                          : isSunday
                           ? 'text-red-500'
                           : isSaturday
                           ? 'text-blue-500'
@@ -350,6 +359,40 @@ export default function ReservationFlowScreen() {
     ? { ...CLINIC_INFO, name: location.state.shopName, id: location.state.shopId }
     : CLINIC_INFO;
 
+  // Get selectedDate from navigation state
+  const selectedDate = location.state?.selectedDate as string | undefined;
+
+  // Get selectedMenu from navigation state
+  const selectedMenuFromState = location.state?.selectedMenu as MenuItem | undefined;
+
+  // Get doctor from navigation state
+  const doctorFromState = location.state?.doctor as { id: number; name: string; image: string; role?: string } | undefined;
+
+  // Auto-select menu if provided in navigation state
+  useEffect(() => {
+    if (selectedMenuFromState) {
+      setSelectedMenu(selectedMenuFromState);
+    }
+  }, [selectedMenuFromState]);
+
+  // Calculate weekOffset based on selectedDate
+  useEffect(() => {
+    if (selectedDate) {
+      const targetDate = new Date(selectedDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      targetDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = targetDate.getTime() - today.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const targetWeekOffset = Math.floor(diffDays / 7);
+      
+      if (targetWeekOffset >= 0) {
+        setWeekOffset(targetWeekOffset);
+      }
+    }
+  }, [selectedDate]);
+
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -381,6 +424,12 @@ export default function ReservationFlowScreen() {
         time: selectedSlot?.time,
         year: selectedSlot?.date.getFullYear(),
         month: (selectedSlot?.date.getMonth() ?? 0) + 1,
+        doctor: doctorFromState ? {
+          id: doctorFromState.id,
+          name: doctorFromState.name,
+          image: doctorFromState.image,
+          role: doctorFromState.role,
+        } : undefined,
       },
     });
   };
@@ -511,6 +560,7 @@ export default function ReservationFlowScreen() {
               onSelectSlot={setSelectedSlot}
               onPrevWeek={() => setWeekOffset(Math.max(0, weekOffset - 1))}
               onNextWeek={() => setWeekOffset(weekOffset + 1)}
+              highlightedDate={selectedDate}
             />
           </div>
         )}
@@ -558,6 +608,32 @@ export default function ReservationFlowScreen() {
                   </div>
                 </div>
               </div>
+
+              {/* Doctor / Staff Section */}
+              {doctorFromState && (
+                <div className="p-4 border-b border-gray-100">
+                  <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-2">担当ドクター</div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                      <img
+                        src={doctorFromState.image}
+                        alt={doctorFromState.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 text-sm">
+                        担当: {doctorFromState.name}
+                      </div>
+                      {doctorFromState.role && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {doctorFromState.role}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Selected Date & Time */}
               <div className="p-4">

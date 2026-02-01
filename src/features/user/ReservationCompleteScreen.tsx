@@ -3,6 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Calendar, Clock, MapPin, Home, List } from 'lucide-react';
 
 // --- Types ---
+type DoctorInfo = {
+  id: number;
+  name: string;
+  image: string;
+  role?: string;
+};
+
 type ReservationData = {
   clinicName: string;
   clinicArea: string;
@@ -17,6 +24,7 @@ type ReservationData = {
   time: string;
   year: number;
   month: number;
+  doctor?: DoctorInfo;
 };
 
 export default function ReservationCompleteScreen() {
@@ -124,6 +132,34 @@ export default function ReservationCompleteScreen() {
               </div>
             </div>
           </div>
+
+          {/* Doctor / Staff Info */}
+          {reservation.doctor && (
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                  <img
+                    src={reservation.doctor.image}
+                    alt={reservation.doctor.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
+                    担当ドクター
+                  </div>
+                  <div className="font-bold text-gray-900 text-sm">
+                    {reservation.doctor.name}
+                  </div>
+                  {reservation.doctor.role && (
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {reservation.doctor.role}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Date & Time Info */}
           <div className="p-4">

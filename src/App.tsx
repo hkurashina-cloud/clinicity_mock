@@ -20,6 +20,7 @@ import MyPageScreen from './features/user/MyPageScreen';
 import ReservationFlowScreen from './features/user/ReservationFlowScreen';
 import ReservationCompleteScreen from './features/user/ReservationCompleteScreen';
 import ChatRoomScreen from './features/user/ChatRoomScreen';
+import DoctorDetailScreen from './features/user/DoctorDetailScreen';
 
 // ================================
 // 管理画面 (Admin) の画面たち
@@ -211,6 +212,7 @@ function App() {
         <Route path="/reserve" element={<ReservationFlowScreen />} />
         <Route path="/reserve/complete" element={<ReservationCompleteScreen />} />
         <Route path="/message/:id" element={<ChatRoomScreen />} />
+        <Route path="/doctor/:id" element={<DoctorDetailScreen />} />
 
         {/* =========================================
           ★ ユーザー画面 (User) の設定
