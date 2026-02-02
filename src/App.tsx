@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import {
   Search,
   PenTool,
-  Calendar,
+  QrCode,
   Bell,
   User,
 } from 'lucide-react';
@@ -14,13 +14,14 @@ import {
 import ShopDetailScreen from './features/user/ShopDetailScreen';
 import HomeScreen from './features/user/HomeScreen';
 import DesignScreen from './features/user/DesignScreen';
-import ReservationScreen from './features/user/ReservationScreen';
+import PointScreen from './features/user/PointScreen';
 import NotificationScreen from './features/user/NotificationScreen';
 import MyPageScreen from './features/user/MyPageScreen';
 import ReservationFlowScreen from './features/user/ReservationFlowScreen';
 import ReservationCompleteScreen from './features/user/ReservationCompleteScreen';
 import ChatRoomScreen from './features/user/ChatRoomScreen';
 import DoctorDetailScreen from './features/user/DoctorDetailScreen';
+import ProfileEditScreen from './features/user/ProfileEditScreen';
 
 // ================================
 // 管理画面 (Admin) の画面たち
@@ -36,7 +37,7 @@ import AdminLayout from './features/admin/components/AdminLayout';
 const UserAppShell: React.FC = () => {
   const location = useLocation();
   const [activeNavTab, setActiveNavTab] = useState<
-    'search' | 'design' | 'reservation' | 'notification' | 'mypage'
+    'search' | 'design' | 'point' | 'notification' | 'mypage'
   >('search');
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
 
@@ -45,8 +46,8 @@ const UserAppShell: React.FC = () => {
     const state = location.state as { tab?: string } | null;
     if (state?.tab === 'search') {
       setActiveNavTab('search');
-    } else if (state?.tab === 'reservation') {
-      setActiveNavTab('reservation');
+    } else if (state?.tab === 'point') {
+      setActiveNavTab('point');
     }
     // Clear the state after reading to prevent re-triggering on refresh
     if (state?.tab) {
@@ -60,18 +61,13 @@ const UserAppShell: React.FC = () => {
       <div className="min-h-screen pb-20">
         {activeNavTab === 'search' && (
           <HomeScreen
-            onEnterAdminMode={() => {}} // もうURLで移動するので不要だが型合わせのため残す
             onShopClick={(id) => setSelectedShopId(id)}
           />
         )}
         {activeNavTab === 'design' && (
           <DesignScreen onShopClick={(id) => setSelectedShopId(id)} />
         )}
-        {activeNavTab === 'reservation' && (
-          <ReservationScreen
-            onNavigateToSearch={() => setActiveNavTab('search')}
-          />
-        )}
+        {activeNavTab === 'point' && <PointScreen />}
         {activeNavTab === 'notification' && (
           <NotificationScreen
             onNavigateToSearch={() => setActiveNavTab('search')}
@@ -96,10 +92,10 @@ const UserAppShell: React.FC = () => {
             onClick={() => setActiveNavTab('design')}
           />
           <NavButton
-            icon={<Calendar size={24} />}
-            label="予約"
-            isActive={activeNavTab === 'reservation'}
-            onClick={() => setActiveNavTab('reservation')}
+            icon={<QrCode size={24} />}
+            label="ポイント"
+            isActive={activeNavTab === 'point'}
+            onClick={() => setActiveNavTab('point')}
           />
           <NavButton
             icon={<Bell size={24} />}
@@ -213,6 +209,7 @@ function App() {
         <Route path="/reserve/complete" element={<ReservationCompleteScreen />} />
         <Route path="/message/:id" element={<ChatRoomScreen />} />
         <Route path="/doctor/:id" element={<DoctorDetailScreen />} />
+        <Route path="/mypage/edit" element={<ProfileEditScreen />} />
 
         {/* =========================================
           ★ ユーザー画面 (User) の設定

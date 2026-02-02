@@ -24,7 +24,7 @@ function DesignScreen({ onShopClick }: DesignScreenProps) {
 
     // --- Mock Data Generators ---
     const generateDesignPosts = (type: '急上昇' | '新着' | 'フォロー中', count: number): DesignPost[] => {
-        const influencers = ["Risa_Beauty", "Dr.Yoko", "Miki_Clinic_Nurse", "Eri_Aesthetic", "Official_Clinicity"];
+        const influencers = ["Risa_Beauty", "Dr.Yoko", "Miki_Clinic_Nurse", "Eri_Aesthetic", "Official_Dress"];
 
         return Array.from({ length: count }).map((_, i) => {
             // Random Image Logic (00-15 prefix, 1-3 suffix)

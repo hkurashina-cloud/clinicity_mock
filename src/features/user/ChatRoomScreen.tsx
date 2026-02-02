@@ -20,7 +20,7 @@ type ChatPartner = {
 const CHAT_PARTNERS: Record<string, ChatPartner> = {
   '1': {
     id: '1',
-    name: 'Clinicity 渋谷本院',
+    name: 'Dress 渋谷本院',
     avatar: '/images/skin/001.webp',
   },
   '2': {
@@ -38,7 +38,7 @@ const CHAT_PARTNERS: Record<string, ChatPartner> = {
 const DUMMY_MESSAGES: Message[] = [
   {
     id: 1,
-    text: 'お問い合わせありがとうございます。Clinicity 渋谷本院です。',
+    text: 'お問い合わせありがとうございます。Dress 渋谷本院です。',
     isMine: false,
     time: '10:00',
   },

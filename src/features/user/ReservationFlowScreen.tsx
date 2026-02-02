@@ -362,19 +362,6 @@ export default function ReservationFlowScreen() {
   // Get selectedDate from navigation state
   const selectedDate = location.state?.selectedDate as string | undefined;
 
-  // Get selectedMenu from navigation state
-  const selectedMenuFromState = location.state?.selectedMenu as MenuItem | undefined;
-
-  // Get doctor from navigation state
-  const doctorFromState = location.state?.doctor as { id: number; name: string; image: string; role?: string } | undefined;
-
-  // Auto-select menu if provided in navigation state
-  useEffect(() => {
-    if (selectedMenuFromState) {
-      setSelectedMenu(selectedMenuFromState);
-    }
-  }, [selectedMenuFromState]);
-
   // Calculate weekOffset based on selectedDate
   useEffect(() => {
     if (selectedDate) {
@@ -424,12 +411,6 @@ export default function ReservationFlowScreen() {
         time: selectedSlot?.time,
         year: selectedSlot?.date.getFullYear(),
         month: (selectedSlot?.date.getMonth() ?? 0) + 1,
-        doctor: doctorFromState ? {
-          id: doctorFromState.id,
-          name: doctorFromState.name,
-          image: doctorFromState.image,
-          role: doctorFromState.role,
-        } : undefined,
       },
     });
   };
@@ -608,32 +589,6 @@ export default function ReservationFlowScreen() {
                   </div>
                 </div>
               </div>
-
-              {/* Doctor / Staff Section */}
-              {doctorFromState && (
-                <div className="p-4 border-b border-gray-100">
-                  <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-2">担当ドクター</div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                      <img
-                        src={doctorFromState.image}
-                        alt={doctorFromState.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900 text-sm">
-                        担当: {doctorFromState.name}
-                      </div>
-                      {doctorFromState.role && (
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {doctorFromState.role}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Selected Date & Time */}
               <div className="p-4">

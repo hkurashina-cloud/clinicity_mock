@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 // ▼ タブ用コンポーネント
-import ShopPostsTab from './components/ShopPostTab';
+import ShopPostsTab from './components/shop_tabs/ShopPostsTab';
 import ShopMenuTab from './components/shop_tabs/ShopMenuTab';
 import ShopSalonInfoTab from './components/shop_tabs/ShopSalonInfoTab';
 import ShopReviewsTab from './components/shop_tabs/ShopReviewsTab';
@@ -43,14 +43,6 @@ type MenuIem = {
     time: string;
     image: string;
     isRecommended?: boolean;
-};
-
-type DoctorData = {
-    id: number;
-    name: string;
-    jobTitle: string;
-    avatar: string;
-    specialties: string[];
 };
 
 // --- Mock Data ---
@@ -108,38 +100,6 @@ const MOCK_SHOPS_DATA: ShopDetailData[] = [
     }
 ];
 
-// Mock Doctors Data
-const MOCK_DOCTORS: DoctorData[] = [
-    {
-        id: 1,
-        name: 'Dr. Elena',
-        jobTitle: '院長 / 皮膚科専門医',
-        avatar: '/images/skin/001.webp',
-        specialties: ['肌質改善', 'シミ取り', 'アンチエイジング'],
-    },
-    {
-        id: 2,
-        name: 'Dr. 山田 太郎',
-        jobTitle: '副院長 / 形成外科専門医',
-        avatar: '/images/skin/011.webp',
-        specialties: ['二重整形', '鼻整形', '小顔注射'],
-    },
-    {
-        id: 3,
-        name: 'Dr. 佐藤 美咲',
-        jobTitle: '美容皮膚科医',
-        avatar: '/images/skin/021.webp',
-        specialties: ['肝斑治療', '毛穴ケア', 'レーザー治療'],
-    },
-    {
-        id: 4,
-        name: 'Dr. 鈴木 健一',
-        jobTitle: '脱毛専門医',
-        avatar: '/images/skin/031.webp',
-        specialties: ['医療脱毛', 'メンズ脱毛', 'VIO脱毛'],
-    },
-];
-
 // --- Components ---
 
 export default function ShopDetailScreen({
@@ -161,14 +121,13 @@ export default function ShopDetailScreen({
         return shuffled.slice(0, 3);
     }, [shopData.cases]);
 
-    const [activeTab, setActiveTab] = useState<'トップ' | '投稿' | 'メニュー' | 'サロン' | 'レビュー' | 'ドクター'>('トップ');
-    const tabs: Array<'トップ' | '投稿' | 'メニュー' | 'サロン' | 'レビュー' | 'ドクター'> = [
+    const [activeTab, setActiveTab] = useState<'トップ' | '投稿' | 'メニュー' | 'サロン' | 'レビュー'>('トップ');
+    const tabs: Array<'トップ' | '投稿' | 'メニュー' | 'サロン' | 'レビュー'> = [
         'トップ',
         '投稿',
         'メニュー',
         'サロン',
         'レビュー',
-        'ドクター',
     ];
 
     // Random Availability Generator (トップ用) - 今日から7日間を表示
@@ -194,62 +153,6 @@ export default function ShopDetailScreen({
                 return <ShopSalonInfoTab />;
             case 'レビュー':
                 return <ShopReviewsTab />;
-            case 'ドクター':
-                return (
-                    <div className="px-4 py-6">
-                        <h2 className="font-bold text-gray-900 text-lg mb-4">ドクター一覧</h2>
-                        <div className="grid grid-cols-1 gap-4">
-                            {MOCK_DOCTORS.map((doctor) => (
-                                <button
-                                    key={doctor.id}
-                                    onClick={() => {
-                                        navigate(`/doctor/${doctor.id}`, {
-                                            state: {
-                                                doctor: {
-                                                    ...doctor,
-                                                    shopId: shopData.id,
-                                                    shopName: shopData.name,
-                                                }
-                                            }
-                                        });
-                                    }}
-                                    className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-left hover:shadow-md active:scale-[0.99] transition-all"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                                            <img
-                                                src={doctor.avatar}
-                                                alt={doctor.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-gray-900 text-sm mb-1">
-                                                {doctor.name}
-                                            </h3>
-                                            <p className="text-xs text-gray-500 mb-2">
-                                                {doctor.jobTitle}
-                                            </p>
-                                            <div className="flex flex-wrap gap-1 mb-2">
-                                                {doctor.specialties.slice(0, 2).map((specialty, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full"
-                                                    >
-                                                        {specialty}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="text-blue-600 text-sm font-bold shrink-0">
-                                            Profile &gt;
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                );
             case 'トップ':
             default:
                 return (

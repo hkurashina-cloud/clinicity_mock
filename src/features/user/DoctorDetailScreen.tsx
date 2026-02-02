@@ -67,11 +67,26 @@ export default function DoctorDetailScreen() {
     const location = useLocation();
 
     // Get doctor data from location state or use mock data
-    // If state exists but lacks details (specialtyCases, assignedMenus), use the full mock data
-    const stateDoctor = location.state?.doctor as Partial<DoctorData> | undefined;
-    const doctor: DoctorData = (stateDoctor && stateDoctor.specialtyCases && stateDoctor.assignedMenus) 
-        ? (stateDoctor as DoctorData) 
-        : doctorData;
+    // Always fallback to mock data if state is missing or invalid
+    const doctor: DoctorData = (location.state?.doctor as DoctorData) || doctorData;
+    
+    // Safety check: ensure doctor is never null/undefined
+    if (!doctor) {
+        console.error('Doctor data is missing, using fallback');
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center p-4">
+                <div className="text-center">
+                    <p className="text-gray-500 mb-4">ドクター情報が見つかりません</p>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="text-blue-500 font-medium"
+                    >
+                        戻る
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const handleBookMenu = (menu: AssignedMenu) => {
         navigate('/reserve', {
@@ -84,7 +99,7 @@ export default function DoctorDetailScreen() {
     };
 
     return (
-        <div className="min-h-screen bg-white overflow-y-auto animate-fade-in font-sans">
+        <div className="fixed inset-0 z-[100] bg-white min-h-screen overflow-y-auto animate-fade-in font-sans">
             {/* Header */}
             <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 h-14 flex items-center justify-between">
                 <button

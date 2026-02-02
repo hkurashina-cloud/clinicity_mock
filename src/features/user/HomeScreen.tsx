@@ -7,8 +7,10 @@ import {
     SlidersHorizontal,
     ChevronLeft,
     Calendar,
-    Send
+    Send,
+    Loader2
 } from 'lucide-react';
+import dressLogo from '../../assets/dress-logo.png';
 
 interface HomeScreenProps {
     onEnterAdminMode?: () => void;
@@ -16,6 +18,9 @@ interface HomeScreenProps {
 }
 
 function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
+    // コンポーネントの中にこれを書く
+    console.log("ロゴ画像のパス:", dressLogo);
+
     const [activeTab, setActiveTab] = useState('肌');
     const [locationAllowed, setLocationAllowed] = useState(() => {
         return localStorage.getItem('clinicity_location_allowed') === 'true';
@@ -23,12 +28,17 @@ function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [searchActiveCategory, setSearchActiveCategory] = useState('肌');
     const [isInstantReservation, setIsInstantReservation] = useState(false);
+    const [aiQuery, setAiQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [aiSuggestedTags, setAiSuggestedTags] = useState<string[]>([]);
+    const [aiRecommendedShops, setAiRecommendedShops] = useState<any[]>([]);
     const categories = ['肌', '脱毛', '顔', 'ボディ', '歯'];
     const scrollPositions = useRef<Record<string, number>>({});
 
     useLayoutEffect(() => {
         window.scrollTo(0, scrollPositions.current[activeTab] || 0);
     }, [activeTab]);
+
 
     // カテゴリ別メニュー定義
     const CATEGORY_MENUS: Record<string, string[]> = {
@@ -192,67 +202,216 @@ function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
         )
     };
 
+    // AI検索ハンドラー（MOCK_DATA定義後に定義）
+    const handleAiSearch = () => {
+        if (!aiQuery.trim()) return;
+
+        setIsSearching(true);
+        setAiSuggestedTags([]);
+        setAiRecommendedShops([]);
+
+        // 1.5秒のローディング
+        setTimeout(() => {
+            setIsSearching(false);
+
+            // ダミーデータのロジック
+            let suggestedTags: string[] = [];
+            if (aiQuery.includes('痛')) {
+                suggestedTags = ["#無痛治療", "#麻酔充実", "#ダウンタイムなし"];
+            } else if (aiQuery.includes('小顔')) {
+                suggestedTags = ["#糸リフト", "#エラボトックス", "#HIFU"];
+            } else {
+                // デフォルトのおすすめタグ
+                suggestedTags = ["#人気急上昇", "#初回限定", "#カウンセリング無料", "#ダウンタイムなし"];
+            }
+
+            setAiSuggestedTags(suggestedTags);
+
+            // おすすめクリニック（既存のMOCK_DATAから2〜3件をランダムに選択）
+            const allShops = MOCK_DATA[activeTab] || [];
+            const shuffled = [...allShops].sort(() => Math.random() - 0.5);
+            const recommended = shuffled.slice(0, 3);
+            setAiRecommendedShops(recommended);
+        }, 1500);
+    };
+
     return (
         <div className="min-h-screen bg-white pb-24 relative font-sans">
             {/* ▼▼▼ Consolidated Header ▼▼▼ */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+            <header className="sticky top-0 z-50 bg-gray-50 border-b border-gray-100 shadow-sm">
 
                 {/* 1. Logo & Login Row */}
                 <div className="h-14 flex items-center justify-between px-4">
-                    <div className="text-xl font-bold text-gray-800 tracking-tight">Clinicity</div>
+                    <div className="flex items-center">
+                        <img 
+                            src={dressLogo} 
+                            alt="Dress Logo" 
+                            className="h-8 w-auto object-contain" 
+                        />
+                    </div>
                     <div className="flex gap-2">
                         <button
                             onClick={onEnterAdminMode}
                             className="text-sm font-medium text-gray-600 px-3 py-2 rounded hover:bg-gray-50 transition-colors"
                         >
-                            <span className="hidden md:inline">管理者画面</span>
-                            <span className="md:hidden">管理</span>
                         </button>
                         <button
                             onClick={() => console.log('Login clicked')}
-                            className="text-sm font-bold bg-gray-900 text-white px-4 py-2 rounded shadow-sm hover:bg-black transition-colors"
+                            className="text-sm font-bold bg-gray-400 text-white px-4 py-2 rounded shadow-sm hover:bg-black active:bg-black transition-colors opacity-70"
                         >
                             ログイン
                         </button>
                     </div>
                 </div>
 
-                {/* 2. Search Bar Row (Compact) */}
-                <div className="px-4 pb-3">
-                    <div className="relative flex items-center shadow-sm rounded-full bg-gray-50 border border-gray-100">
-                        <input
-                            type="text"
-                            placeholder="AIに相談する..."
-                            className="w-full pl-6 pr-14 py-3 rounded-full bg-transparent text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
-                        />
-                        <button className="absolute right-2 p-1.5 bg-accent-gradient rounded-full text-white shadow-md hover:opacity-90 active:scale-95 transition-all">
-                            <Send size={16} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* 3. Category Tabs Row (No top padding) */}
-                <div className="px-4 pb-0">
-                    <div className="grid grid-cols-5 gap-2 w-full">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => {
-                                    scrollPositions.current[activeTab] = window.scrollY;
-                                    setActiveTab(cat);
-                                }}
-                                className={`pb-3 text-[13px] font-bold transition-all relative ${activeTab === cat
-                                    ? 'text-blue-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600'
-                                    : 'text-gray-400 hover:text-gray-600'
-                                    }`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
-                </div>
             </header>
             {/* ▲▲▲ Consolidated Header End ▲▲▲ */}
+
+            {/* AI Search Hero Area */}
+            <section className="min-h-[50vh] flex flex-col justify-center bg-gradient-to-b from-blue-50/80 to-white">
+                <div className="px-4 pb-6">
+                    {/* Search Area Container */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                        {/* 1. Category Tabs (Pill Style) */}
+                        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar justify-center flex-wrap">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => {
+                                        scrollPositions.current[activeTab] = window.scrollY;
+                                        setActiveTab(cat);
+                                    }}
+                                    className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                                        activeTab === cat
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* 2. AI Search Input Box */}
+                        <div className="relative flex items-center shadow-sm rounded-full bg-gray-100 border-0 mb-4">
+                            <input
+                                type="text"
+                                value={aiQuery}
+                                onChange={(e) => setAiQuery(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleAiSearch();
+                                    }
+                                }}
+                                placeholder="AIに相談する..."
+                                className="w-full pl-6 pr-14 py-3 rounded-full bg-transparent text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
+                            />
+                            <button 
+                                onClick={handleAiSearch}
+                                disabled={isSearching || !aiQuery.trim()}
+                                className="absolute right-2 p-1.5 bg-accent-gradient rounded-full text-white shadow-md hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSearching ? (
+                                    <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                    <Send size={16} />
+                                )}
+                            </button>
+                        </div>
+
+                        {/* 3. "条件から検索する" Button */}
+                        <button
+                            onClick={() => setIsSearchModalOpen(true)}
+                            className="w-full py-3.5 bg-accent-gradient rounded-xl shadow-md text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                        >
+                            <SlidersHorizontal size={20} />
+                            <span>条件から検索する</span>
+                        </button>
+                    </div>
+
+                    {/* Loading Indicator */}
+                    {isSearching && (
+                        <div className="flex items-center justify-center py-4">
+                            <Loader2 size={24} className="animate-spin text-primary" />
+                            <span className="ml-2 text-sm text-gray-600">AIが検索中...</span>
+                        </div>
+                    )}
+
+                    {/* AI Search Results */}
+                    {(aiSuggestedTags.length > 0 || aiRecommendedShops.length > 0) && !isSearching && (
+                        <div className="mt-6 animate-fade-in">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">AIからの提案</h3>
+                            
+                            {/* Suggested Tags */}
+                            {aiSuggestedTags.length > 0 && (
+                                <div className="mb-6">
+                                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                        {aiSuggestedTags.map((tag, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="flex-shrink-0 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-bold"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Recommended Shops */}
+                            {aiRecommendedShops.length > 0 && (
+                                <div className="space-y-4">
+                                    {aiRecommendedShops.map((shop) => (
+                                        <div
+                                            key={shop.id}
+                                            onClick={() => onShopClick(shop.id)}
+                                            className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
+                                        >
+                                            <div className="flex gap-3 p-4">
+                                                <div className="flex-shrink-0">
+                                                    <img
+                                                        src={shop.avatar}
+                                                        alt={shop.name}
+                                                        className="w-16 h-16 rounded-full object-cover"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-bold text-gray-900 mb-1 truncate">{shop.name}</h4>
+                                                    <p className="text-xs text-gray-500 mb-2">{shop.branch}</p>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="flex items-center">
+                                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                                <Star
+                                                                    key={i}
+                                                                    size={12}
+                                                                    className={i < Math.floor(shop.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <span className="text-xs text-gray-600">
+                                                            {shop.rating.toFixed(1)} 口コミ{shop.reviewCount}件
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {shop.tags.slice(0, 2).map((tag: string, idx: number) => (
+                                                            <span
+                                                                key={idx}
+                                                                className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-bold"
+                                                            >
+                                                                {tag}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </section>
 
             {/* 3. Main Content Area */}
             <main className="px-5 mt-6">
@@ -280,17 +439,6 @@ function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
                 ) : (
                     /* Content: Rising Popularity */
                     <div className="animate-fade-in">
-
-                        {/* NEW: Search by Conditions Button */}
-                        <div className="mb-6">
-                            <button
-                                onClick={() => setIsSearchModalOpen(true)}
-                                className="w-full py-3.5 bg-accent-gradient rounded-xl shadow-md text-white font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                            >
-                                <SlidersHorizontal size={20} />
-                                <span>条件から検索する</span>
-                            </button>
-                        </div>
 
                         {/* Region Label */}
                         <div className="text-xs text-gray-500 font-medium mb-4 flex items-center gap-1">
@@ -386,7 +534,6 @@ function HomeScreen({ onEnterAdminMode, onShopClick }: HomeScreenProps) {
                             {/* Scroll padding */}
                             <div className="h-6"></div>
                         </div>
-
                     </div>
                 )}
             </main>

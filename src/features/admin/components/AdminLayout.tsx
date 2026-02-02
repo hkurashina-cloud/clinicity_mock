@@ -45,7 +45,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         lg:translate-x-0 lg:static lg:h-screen lg:overflow-y-auto
       `}>
         <div className="h-16 flex items-center px-6 border-b border-gray-100 justify-between">
-          <span className="text-xl font-bold text-blue-600">Clinicity Admin</span>
+          <span className="text-xl font-bold text-blue-600">Dress Admin</span>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden">
             <X size={24} />
           </button>
